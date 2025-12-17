@@ -9,14 +9,10 @@ const firebaseConfig = {
   projectId: "virtual-art-gallery-eaf83",
   storageBucket: "virtual-art-gallery-eaf83.firebasestorage.app",
   messagingSenderId: "18362983952",
-  appId: "1:18362983952:web:6c0dfd2fa52a3fd1fc0c95",
-  measurementId: "G-W9FKG7N2XB"
+  appId: "1:18362983952:web:6c0dfd2fa52a3fd1fc0c95"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
-
-// Export services to use them in other files
-export const auth = getAuth(app);
+export const auth = getAuth(app); // This is what the Signup page is looking for!
 export const db = getFirestore(app);
 export const storage = getStorage(app);
