@@ -1,34 +1,13 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
-
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
+    <div className="flex flex-col items-center justify-center min-h-screen bg-slate-900 text-white">
+      <h1 className="text-4xl font-bold text-sky-400 animate-bounce">
+        Tailwind is Working!
+      </h1>
+      <p className="mt-4 p-4 bg-white/10 rounded-lg border border-white/20">
+        If you see a dark background and a bouncing blue title, you're ready to build your gallery.
       </p>
-    </>
+    </div>
   )
 }
 
