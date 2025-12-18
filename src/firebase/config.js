@@ -10,6 +10,5 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 
-// Export only what we need for the hybrid system
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();

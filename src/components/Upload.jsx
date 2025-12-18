@@ -15,26 +15,21 @@ export default function Upload() {
 
     setLoading(true);
     try {
-      // Step 1: Clean the filename (no spaces, no special chars)
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
+      const cleanFileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
       
-      // Step 2: Match your dashboard casing: 'GALLERY'
+      // FIXED: Changed to lowercase 'gallery' to match your dashboard
       const { data, error: storageError } = await supabase.storage
-        .from('GALLERY') 
-        .upload(fileName, file, {
-          cacheControl: '3600',
-          upsert: false
-        });
+        .from('gallery') 
+        .upload(cleanFileName, file);
 
-      if (storageError) throw new Error(storageError.message);
+      if (storageError) throw storageError;
 
-      // Step 3: Generate the Public URL
+      // FIXED: Changed to lowercase 'gallery'
       const { data: { publicUrl } } = supabase.storage
-        .from('GALLERY')
-        .getPublicUrl(fileName);
+        .from('gallery')
+        .getPublicUrl(cleanFileName);
 
-      // Step 4: Save to 'artworks' table
+      // Save to SQL table 'artworks'
       const { error: dbError } = await supabase
         .from('artworks')
         .insert([{ 
@@ -43,26 +38,27 @@ export default function Upload() {
           user_id: auth.currentUser.uid 
         }]);
 
-      if (dbError) throw new Error(dbError.message);
+      if (dbError) throw dbError;
 
-      alert("Uploaded successfully!");
+      alert("Upload Successful!");
       navigate('/');
     } catch (err) {
-      alert("Error: " + err.message); // This will tell us if it's still "Bucket not found"
-      console.error(err);
+      alert("Error: " + err.message);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-md mx-auto p-6 bg-white shadow-lg mt-10 rounded">
-      <h2 className="text-xl font-bold mb-4">Upload New Artwork</h2>
+    <div className="max-w-md mx-auto mt-10 p-6 bg-white shadow-md rounded">
+      <h2 className="text-2xl font-bold mb-4">Upload Artwork</h2>
       <form onSubmit={handleUpload} className="space-y-4">
-        <input type="text" placeholder="Title" className="w-full border p-2" onChange={(e)=>setTitle(e.target.value)} required />
-        <input type="file" className="w-full" onChange={(e)=>setFile(e.target.files[0])} required />
-        <button className="w-full bg-blue-600 text-white p-2 rounded disabled:bg-gray-400" disabled={loading}>
-          {loading ? "Publishing..." : "Publish"}
+        <input type="text" placeholder="Title" className="w-full p-2 border rounded" 
+          onChange={(e) => setTitle(e.target.value)} required />
+        <input type="file" className="w-full" 
+          onChange={(e) => setFile(e.target.files[0])} required />
+        <button type="submit" disabled={loading} className="w-full bg-blue-600 text-white p-2 rounded">
+          {loading ? "Uploading..." : "Publish"}
         </button>
       </form>
     </div>
