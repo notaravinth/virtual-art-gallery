@@ -1,23 +1,32 @@
 import { useEffect, useState } from 'react';
-import { db } from '../firebase/config';
-import { collection, getDocs, orderBy, query } from 'firebase/firestore';
-import ArtCard from './ArtCard';
+import { supabase } from '../supabaseClient';
 
 export default function Home() {
   const [arts, setArts] = useState([]);
 
   useEffect(() => {
-    const getArts = async () => {
-      const q = query(collection(db, "artworks"), orderBy("createdAt", "desc"));
-      const snap = await getDocs(q);
-      setArts(snap.docs.map(doc => ({...doc.data(), id: doc.id})));
-    };
-    getArts();
+    async function fetchGallery() {
+      const { data, error } = await supabase
+        .from('artworks')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (!error) setArts(data || []);
+    }
+    fetchGallery();
   }, []);
 
   return (
-    <div className="p-8 grid grid-cols-1 md:grid-cols-3 gap-8">
-      {arts.map(art => <ArtCard key={art.id} art={art} />)}
+    <div className="p-10">
+      <h1 className="text-3xl font-bold text-center mb-8">Community Art Gallery</h1>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {arts.map((art) => (
+          <div key={art.id} className="border rounded-lg overflow-hidden shadow-sm">
+            <img src={art.image_url} alt={art.title} className="w-full h-64 object-cover border-b" />
+            <div className="p-4 bg-white text-center font-bold">{art.title}</div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

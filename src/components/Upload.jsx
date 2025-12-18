@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { storage, db, auth } from '../firebase/config';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { supabase } from '../supabaseClient'; 
+import { auth } from '../firebase/config';    
 import { useNavigate } from 'react-router-dom';
 
 export default function Upload() {
@@ -12,54 +11,58 @@ export default function Upload() {
 
   const handleUpload = async (e) => {
     e.preventDefault();
-    if (!file || !auth.currentUser) return;
-    
+    if (!file || !auth.currentUser) return alert("Log in first!");
+
     setLoading(true);
     try {
-      // 1. Upload to Firebase Storage
-      const fileRef = ref(storage, `artworks/${Date.now()}_${file.name}`);
-      await uploadBytes(fileRef, file);
-      const url = await getDownloadURL(fileRef);
+      // Step 1: Clean the filename (no spaces, no special chars)
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
+      
+      // Step 2: Match your dashboard casing: 'GALLERY'
+      const { data, error: storageError } = await supabase.storage
+        .from('GALLERY') 
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
 
-      // 2. Save metadata to Firestore
-      await addDoc(collection(db, "artworks"), {
-        title,
-        imageUrl: url,
-        userId: auth.currentUser.uid,
-        userEmail: auth.currentUser.email,
-        createdAt: serverTimestamp()
-      });
+      if (storageError) throw new Error(storageError.message);
 
-      alert("Masterpiece Published!");
+      // Step 3: Generate the Public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('GALLERY')
+        .getPublicUrl(fileName);
+
+      // Step 4: Save to 'artworks' table
+      const { error: dbError } = await supabase
+        .from('artworks')
+        .insert([{ 
+          title: title, 
+          image_url: publicUrl, 
+          user_id: auth.currentUser.uid 
+        }]);
+
+      if (dbError) throw new Error(dbError.message);
+
+      alert("Uploaded successfully!");
       navigate('/');
     } catch (err) {
+      alert("Error: " + err.message); // This will tell us if it's still "Bucket not found"
       console.error(err);
-      alert("Upload failed. Ensure you are logged in and CORS is configured.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-8 mt-10 bg-white rounded-2xl shadow-xl border">
-      <h2 className="text-3xl font-bold mb-6 text-center">Share Art</h2>
-      <form onSubmit={handleUpload} className="space-y-6">
-        <input 
-          type="text" placeholder="Title" required
-          className="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
-          onChange={(e) => setTitle(e.target.value)} 
-        />
-        
-        <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-2xl cursor-pointer bg-gray-50 hover:bg-gray-100 transition">
-          <div className="text-center">
-            <p className="text-sm text-gray-500 font-semibold">
-              {file ? file.name : "Click to select artwork"}
-            </p>
-          </div>
-          <input type="file" className="hidden" onChange={(e) => setFile(e.target.files[0])} required />
-        </label>
-
-        <button disabled={loading} className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold hover:bg-blue-700 transition disabled:opacity-50">
-          {loading ? "Uploading..." : "Publish to Gallery"}
+    <div className="max-w-md mx-auto p-6 bg-white shadow-lg mt-10 rounded">
+      <h2 className="text-xl font-bold mb-4">Upload New Artwork</h2>
+      <form onSubmit={handleUpload} className="space-y-4">
+        <input type="text" placeholder="Title" className="w-full border p-2" onChange={(e)=>setTitle(e.target.value)} required />
+        <input type="file" className="w-full" onChange={(e)=>setFile(e.target.files[0])} required />
+        <button className="w-full bg-blue-600 text-white p-2 rounded disabled:bg-gray-400" disabled={loading}>
+          {loading ? "Publishing..." : "Publish"}
         </button>
       </form>
     </div>
