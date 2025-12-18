@@ -2,10 +2,10 @@ import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCCT0yyIz7QMeT3xn4TIJce7Uja-9bIg9U",
-  authDomain: "virtual-art-gallery-eaf83.firebaseapp.com",
-  projectId: "virtual-art-gallery-eaf83",
-  appId: "1:18362983952:web:6c0dfd2fa52a3fd1fc0c95"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
 const app = initializeApp(firebaseConfig);
